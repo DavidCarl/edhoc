@@ -80,9 +80,11 @@ impl From<Error> for OwnError {
             Error::UnsupportedSuite => {
                 OwnError(util::build_error_message(ERR_SUITE))
             }
+            Error::BadMac => {
+                OwnError(util::build_error_message(ERR_BADMAC))
+            } 
             Error::Cbor(_) => OwnError(util::build_error_message(ERR_CBOR)),
 
-            Error::BadMac => OwnError(util::build_error_message(ERR_BADMAC)),
             Error::Hkdf(_) => OwnError(util::build_error_message(ERR_HKDF)),
             Error::Aead => OwnError(util::build_error_message(ERR_AEAD)),
             _ => unreachable!(),

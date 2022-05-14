@@ -27,9 +27,9 @@ fn main() {
     let i_static_pub = PublicKey::from(&i_static_priv);
 
 
-    // Party U ----------------------------------------------------------------
+    // Party R ----------------------------------------------------------------
     // "Generate" an ECDH key pair (this is static, but MUST be ephemeral)
-    // The ECDH private key used by U
+    // The ECDH private key used R
     let mut i_priv = [0u8; 32];
     OsRng.fill_bytes(&mut i_priv);
     
@@ -105,6 +105,9 @@ fn main() {
         } 
         Ok(val) => val,
     };
+
+    
+
 
 
     let msg3_sender = match msg2_verifier.verify_message_2(r_static_pub.as_bytes()) {

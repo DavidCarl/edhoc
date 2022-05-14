@@ -786,14 +786,14 @@ impl PartyR<Msg3verifier> {
         let sck = util::extract_expand(
                     &master_secret,
                     &master_salt, 
-                    "DOWNLINK", 
+                    "UPLINK", 
                     32, 
                     )?;
         
        let rck = util::extract_expand(
                     &master_secret,
                     &master_salt, 
-                    "UPLINK", 
+                    "DOWNLINK", 
                     32,  
                     )?;
         
