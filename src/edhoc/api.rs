@@ -59,8 +59,6 @@ impl PartyI<Msg1Sender> {
         // and from that build the corresponding public key
         let pub_ek_i = PublicKey::from(&priv_ek_i);
 
-
-
          PartyI(Msg1Sender {
             ead_1,
             c_i,
@@ -124,18 +122,14 @@ impl PartyI<Msg2Receiver> {
 
         util::fail_on_error_message(&msg_2)?;
 
-
-        let msg_2 = util::deserialize_message_2(&msg_2)?;
-
+        let msg_2 = util::deserialize_message_2(&msg_2).unwrap();
 
         let mut pub_ephemeral_r_bytes = [0; 32];
         pub_ephemeral_r_bytes.copy_from_slice(&msg_2.ephemeral_key_r[..32]);
         let pub_ephemeral_r = x25519_dalek_ng::PublicKey::from(pub_ephemeral_r_bytes);
         // Constructing shared secret 0 for initiator 
 
-
        let shared_secret_0 = self.0.priv_ek_i.diffie_hellman(&pub_ephemeral_r);
-        
 
         // reconstructing keystream2
         let c_r_cpy = msg_2.c_r.clone();
@@ -151,12 +145,11 @@ impl PartyI<Msg2Receiver> {
                                             msg_2.ciphertext_2.len(), 
                                             )?;
 
+        
 
         let decryptedlaintext = util::xor(&keystream2, &msg_2.ciphertext_2)?;
 
         let (kid_r,mac_2,ead_2 ) = util::extract_plaintext(decryptedlaintext)?;
-
-
         Ok((
             kid_r.clone(),
             c_r_cpy,
@@ -173,8 +166,6 @@ impl PartyI<Msg2Receiver> {
                 th_2,
                 kid_r,
                 pub_ephemeral_r,
-
-
             }),
         ))
 
@@ -221,7 +212,9 @@ impl PartyI<Msg2Verifier> {
         // build cred_x and id_cred_x (for responder party)
         let id_cred_r = cose::build_id_cred_x(&self.0.kid_r)?;
 
+
         let cred_r = cose::serialize_cred_x(pub_static_r_bytes,&self.0.kid_r )?; 
+
         // Generating static public key of initiator
         let mut buf = [0; 32];
         buf.copy_from_slice(&pub_static_r_bytes[..32]);
@@ -245,10 +238,11 @@ impl PartyI<Msg2Verifier> {
             cred_r,
             &self.0.ead_2)?;
       
+
         if self.0.mac_2 != mac_2{
+
             return Err(Error::BadMac.into())
         }
-        
 
         Ok(PartyI(Msg3Sender{
             priv_st_i : self.0.priv_st_i,
@@ -292,18 +286,18 @@ impl PartyI<Msg3Sender> {
         let cred_i = cose::serialize_cred_x(&self.0.pub_st_i.to_bytes(), &self.0.i_kid)?;
 
         let shared_secret_2 = self.0.priv_st_i.diffie_hellman(&self.0.pub_ephemeral_r);
-        
+
         
         // transcript hash 3
 
         let th_3 = util::compute_th_3(
             &self.0.th_2, 
             &self.0.msg_2.ciphertext_2)?;
-
             
-        let (_,prk_4x3m_hkdf) = util::extract_prk(
+        let (prk4,prk_4x3m_hkdf) = util::extract_prk(
             Some(&self.0.prk_3e2m),
              shared_secret_2.as_bytes())?;
+
 
         let mac_3 = util::create_mac_with_kdf(
             &self.0.prk_3e2m_hkdf, 
@@ -331,7 +325,6 @@ impl PartyI<Msg3Sender> {
         let p = util::build_plaintext(&self.0.i_kid, &mac_3,ead_3)?;
 
         let ad = cose::build_ad(&th_3)?;
-
         // Constructing ciphertext:
         let ciphertext_3 = util::aead_seal(&k_3, &iv_3, &p, &ad)?;
         let th_4 = util::compute_th_4(&th_3, &ciphertext_3)?;
@@ -352,7 +345,6 @@ impl PartyI<Msg3Sender> {
             util::CCM_KEY_LEN/8, //going from bits to bytes
 
         )?;
-
         let master_salt = util::edhoc_exporter(
             &prk_4x3m_hkdf,
             &th_4,
@@ -391,10 +383,8 @@ impl PartyI<Msg4ReceiveVerify> {
         msg4_seq : Vec<u8>,
     ) -> Result<(Vec<u8>, Vec<u8>,Vec<u8>,Vec<u8>), OwnOrPeerError> {
 
-
         util::fail_on_error_message(&msg4_seq)?;
         let msg4 = util::deserialize_message_4(&msg4_seq)?;
-
 
         let k_4 = util::edhoc_exporter(
             &self.0.prk_4x3m_hkdf,
@@ -412,12 +402,13 @@ impl PartyI<Msg4ReceiveVerify> {
             util::CCM_NONCE_LEN/8 , //going from bits to bytes
         )?;
         let ad = cose::build_ad(&self.0.th_4)?;
-        let plaintext = util::aead_open(&k_4, &iv_4, &msg4.ciphertext, &ad)?;
 
+        let plaintext = util::aead_open(&k_4, &iv_4, &msg4.ciphertext, &ad)?;
         let ead : Vec<u8> = Vec::new();
         if !plaintext.is_empty(){
             let ead = util::deserialize_ead(&plaintext)?;
         }
+        
 
 
         let sck = util::extract_expand(
@@ -530,19 +521,13 @@ impl PartyR<Msg1Receiver> {
         ed_key_bytes.copy_from_slice(&msg_1.pub_ek_i[..32]);
         let pub_ek_i = x25519_dalek_ng::PublicKey::from(ed_key_bytes);
 
-        // generating shared secret at responder
-        let shared_secret_0 = self.0.priv_ephemeral_r.diffie_hellman(&pub_ek_i);
-        
-        let shared_secret_1 = self.0.priv_static_r.diffie_hellman(&pub_ek_i);
-
-
 
         Ok((PartyR(Msg2Sender {
             priv_ephemeral_r : self.0.priv_ephemeral_r,
             pub_ephemeral_r: self.0.pub_ephemeral_r,
             pub_static_r: self.0.pub_static_r,
-            shared_secret_0,
-            shared_secret_1,
+            priv_static_r : self.0.priv_static_r,
+            pub_ephemeral_i : pub_ek_i,
             kid_r: self.0.kid,
             msg_1_seq,
         }),
@@ -571,8 +556,8 @@ pub struct Msg2Sender {
     priv_ephemeral_r: StaticSecret,
     pub_ephemeral_r: PublicKey,
     pub_static_r : PublicKey,
-    shared_secret_0: SharedSecret,
-    shared_secret_1: SharedSecret,
+    priv_static_r : StaticSecret,
+    pub_ephemeral_i : PublicKey,
     kid_r: Vec<u8>,
     msg_1_seq: Vec<u8>,
 }
@@ -592,9 +577,13 @@ impl PartyR<Msg2Sender> {
 
             let th_2 = util::compute_th_2(self.0.msg_1_seq, &c_r, self.0.pub_ephemeral_r)?;
 
-            let (prk_2e,prk_2e_hkdf) = util::extract_prk(None, self.0.shared_secret_0.as_bytes())?;
+            let shared_secret_0 = self.0.priv_ephemeral_r.diffie_hellman(&self.0.pub_ephemeral_i);
 
-            let (prk_3e2m,prk_3e2m_hkdf) = util::extract_prk(Some(&prk_2e),self.0.shared_secret_1.as_bytes())?;
+            let (prk_2e,prk_2e_hkdf) = util::extract_prk(None, shared_secret_0.as_bytes())?;
+
+            let shared_secret_1 = self.0.priv_static_r.diffie_hellman(&self.0.pub_ephemeral_i);
+
+            let (prk_3e2m,prk_3e2m_hkdf) = util::extract_prk(Some(&prk_2e),shared_secret_1.as_bytes())?;
 
             let mac_2 = util::create_mac_with_kdf(
                 &prk_3e2m_hkdf, 
@@ -740,13 +729,17 @@ impl PartyR<Msg3verifier> {
         let mut statkey_i_bytes = [0; 32];
         statkey_i_bytes.copy_from_slice(&i_public_static_bytes[..32]);
         let i_public_static = x25519_dalek_ng::PublicKey::from(statkey_i_bytes);
-            
         let shared_secret_2 = self.0.priv_ephemeral_r.diffie_hellman(&i_public_static);
     
 
         let id_cred_i = cose::build_id_cred_x(&self.0.kid)?;
 
+
+
         let cred_i = cose::serialize_cred_x(&i_public_static.to_bytes(), &self.0.kid)?;
+
+
+
         let mac_3_initiator = util::create_mac_with_kdf(
             &self.0.prk_3e2m_hkdf, 
             util::EDHOC_MAC/8, 
@@ -756,9 +749,11 @@ impl PartyR<Msg3verifier> {
              cred_i,
             &self.0.ead_3)?;
 
+
         if mac_3_initiator != self.0.mac3{
            return  Err(Error::BadMac.into())
             }
+
 
         let th_4 = util::compute_th_4(&self.0.th_3, &self.0.msg_3.ciphertext)?;
 
@@ -766,7 +761,6 @@ impl PartyR<Msg3verifier> {
                 Some(&self.0.prk_3e2m),
                  shared_secret_2.as_bytes())?;
     
-
         let master_secret = util::edhoc_exporter(
                      &prk_4x3m_hkdf,
                      &th_4,
@@ -894,20 +888,10 @@ fn message1() {
         pub_st_i,
         KID_I.to_vec(),
     );
-    let (msg1_bytes, msg2receiver) = msg1_sender.generate_message_1(METHOD_TYPE_I, SUITE_I).unwrap();
+    let (msg1_bytes, _msg2receiver) = msg1_sender.generate_message_1(METHOD_TYPE_I, SUITE_I).unwrap();
 
 
     assert_eq!(msg1_bytes,MSG1.to_vec());
-}
-fn message4() {
-/*
-    let (_,prk_4x3m_hkdf) = util::extract_prk(Some(&PRK3EM), &SHARED_SECRET_2).unwrap();
-    let msg4sender = PartyR<Msg4Sender{
-     prk_4x3m_hkdf,
-     th_4 : TH_2.to_vec(),
- }>;
-
- let msg4_bytes = msg4sender.generate_message_4();*/
 }
 
 }
