@@ -21,7 +21,7 @@
 //! This should **not currently be used in production code**, use at your own
 //! risk.
 
-//#![no_std]
+#![no_std]
 #[macro_use]
 extern crate alloc;
 

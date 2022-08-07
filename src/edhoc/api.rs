@@ -509,7 +509,9 @@ impl PartyR<Msg1Receiver> {
         let msg_1_seq = msg_1;
         // Decode the first message
 
+
         let msg_1 = util::deserialize_message_1(&msg_1_seq)?;
+
 
         // Verify that the selected suite is supported
         
