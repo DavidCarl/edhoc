@@ -294,7 +294,7 @@ impl PartyI<Msg3Sender> {
             &self.0.th_2, 
             &self.0.msg_2.ciphertext_2)?;
             
-        let (prk4,prk_4x3m_hkdf) = util::extract_prk(
+        let (_,prk_4x3m_hkdf) = util::extract_prk(
             Some(&self.0.prk_3e2m),
              shared_secret_2.as_bytes())?;
 
