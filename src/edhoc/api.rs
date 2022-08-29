@@ -2,7 +2,7 @@
 
 use alloc::vec::Vec;
 use core::result::Result;
-use x25519_dalek_ng::{PublicKey, SharedSecret, StaticSecret};
+use x25519_dalek_ng::{PublicKey, StaticSecret};
 use super::{
     cose,
     error::{EarlyError, Error, OwnError, OwnOrPeerError},

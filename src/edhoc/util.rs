@@ -563,8 +563,6 @@ use super::*;
 
 
 
-#[test]
-
 fn test_serialize_message_2() {
 
 

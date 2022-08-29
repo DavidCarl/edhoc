@@ -5,7 +5,6 @@ use serde::ser::{Serialize, Serializer, SerializeMap};
 #[cfg_attr(tarpaulin, skip)]
 mod error;
 pub use error::CborError;
-use alloc::collections::BTreeMap;
 
 
 /// The result type for the `cbor` module.

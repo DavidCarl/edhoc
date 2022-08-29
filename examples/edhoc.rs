@@ -8,7 +8,6 @@ use edhoc::edhoc::{
 
 use x25519_dalek_ng::{PublicKey,StaticSecret};
 
-use rand_core::{OsRng,RngCore};
 
 
 const SUITE_I: u8 = 0;
@@ -75,7 +74,7 @@ fn main() {
     let msg1_receiver =
        PartyR::new(R_EPHEMEREAL_SK, r_static_priv, r_static_pub, KID_R.to_vec());
        
-    let (msg2_sender,devui,appeui) = match msg1_receiver.handle_message_1_ead(msg1_bytes) {
+    let (msg2_sender,_devui,appeui) = match msg1_receiver.handle_message_1_ead(msg1_bytes) {
         Err(OwnError(b)) => {
             panic!("{:?}", b)
         },
@@ -103,7 +102,7 @@ fn main() {
     
 
     // unpacking message, and getting kid, which we in a realworld situation would use to lookup our key
-    let  (r_kid ,ad_r ,msg2_verifier) = match msg2_receiver.unpack_message_2_return_kid(msg2_bytes){
+    let  (_r_kid ,_ad_r ,msg2_verifier) = match msg2_receiver.unpack_message_2_return_kid(msg2_bytes){
         Err(OwnOrPeerError::PeerError(s)) => {
             panic!("Error during  {}", s)
         }
@@ -132,7 +131,7 @@ fn main() {
     /// Responder receiving and handling message 3, and generating message4 and sck rck
     ///////////////////////////////////////////////////////////////////// */
     
-    let (msg3verifier, kid) = match  msg3_receiver.unpack_message_3_return_kid(msg3_bytes) {
+    let (msg3verifier, _kid) = match  msg3_receiver.unpack_message_3_return_kid(msg3_bytes) {
         Err(OwnOrPeerError::PeerError(s)) => {
             panic!("Error during  {}", s)
         }
